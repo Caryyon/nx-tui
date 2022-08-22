@@ -1,7 +1,8 @@
 use std::{io, time::Duration};
 use tui::{
     backend::{CrosstermBackend, Backend},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, Borders, Paragraph, List, ListItem},
+    text::{Spans, Span},
     Frame,
     layout::{Layout, Constraint, Direction},
     Terminal
@@ -46,7 +47,6 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
    // main block layout for side nav and visual block
    let side_nav = Layout::default()
         .direction(Direction::Horizontal)
-        .margin(1)
         .constraints(
             [
                 Constraint::Percentage(20),
@@ -54,10 +54,17 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
             ].as_ref()
         )
         .split(chunks[0]);
+   let mut tmp_list: Vec<&str> = vec![];
+   tmp_list.push("one");
+   tmp_list.push("two");
+   tmp_list.push("three");
+   tmp_list.push("four");
+       let items: Vec<ListItem> = tmp_list.iter().map(|i| {
+           ListItem::new(Span::from(i.to_string()))
+       }).collect();
    // side nav menu block
-    let nav = Block::default()
-         .title("Generators")
-         .borders(Borders::ALL);
+    let nav = List::new(items)
+        .block(Block::default().borders(Borders::ALL).title("List"));
     f.render_widget(nav, side_nav[0]);
 
     // Main wrapping block
