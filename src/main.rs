@@ -1,20 +1,20 @@
-use std::{io, thread, time::Duration};
+use std::{io, time::Duration};
 use tui::{
     backend::{CrosstermBackend, Backend},
-    widgets::{Widget, Block, Borders, Paragraph},
+    widgets::{Block, Borders, Paragraph},
     Frame,
     layout::{Layout, Constraint, Direction},
     Terminal
 };
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEvent},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     Result,
-    cursor::{Show, MoveTo},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
 use unicode_width::UnicodeWidthStr;
+
 /// App holds the state of the application
 struct App {
     /// Current value of the input box
@@ -32,6 +32,7 @@ impl Default for App {
     }
 }
 fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
+    // whole app layout wrapper
    let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -42,10 +43,29 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
             ].as_ref()
         )
         .split(f.size());
+   // main block layout for side nav and visual block
+   let side_nav = Layout::default()
+        .direction(Direction::Horizontal)
+        .margin(1)
+        .constraints(
+            [
+                Constraint::Percentage(20),
+                Constraint::Percentage(80),
+            ].as_ref()
+        )
+        .split(chunks[0]);
+   // side nav menu block
+    let nav = Block::default()
+         .title("Generators")
+         .borders(Borders::ALL);
+    f.render_widget(nav, side_nav[0]);
+
+    // Main wrapping block
     let block = Block::default()
          .title("Builder")
          .borders(Borders::ALL);
     f.render_widget(block, chunks[0]);
+    // bottom input block
     let input = Paragraph::new(app.input.as_ref())
         .block(Block::default().borders(Borders::ALL).title("Command"));
     f.render_widget(input, chunks[1]);
@@ -64,9 +84,9 @@ fn main() -> Result<()> {
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    // create app and run it
+    // create app
     let mut app = App::default();
-
+    //TODO: abstract this out some or things will get sloppy
     loop {
     terminal.draw(|f| {
         ui(f, &app)
@@ -87,17 +107,18 @@ fn main() -> Result<()> {
                         app.input.pop();
                     }
                     _ => {
-                        //todo
+                        // not sure i'll have more yet
+                        todo!();
                     }
                 }
+                // just for making sure i'm not insane when getting inputs
                 //println!("{:?}\r", event);
             };
         } else {
+            // TODO: make this better it's sloppy
                 println!("");
             }
     }
-
-    //thread::sleep(Duration::from_millis(5000));
 
     // restore terminal
     disable_raw_mode()?;
