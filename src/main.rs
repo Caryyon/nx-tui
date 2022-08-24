@@ -2,7 +2,8 @@ use std::{io, time::Duration};
 use tui::{
     backend::{CrosstermBackend, Backend},
     widgets::{Block, Borders, Paragraph, List, ListItem},
-    text::{Spans, Span},
+    text::Span,
+    style::{Color, Modifier, Style},
     Frame,
     layout::{Layout, Constraint, Direction},
     Terminal
@@ -14,24 +15,11 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use unicode_width::UnicodeWidthStr;
+extern crate skullcap;
+use skullcap::{App,styled};
+use skullcap::layout::input::search;
+use skullcap::layout::atom::div;
 
-/// App holds the state of the application
-struct App {
-    /// Current value of the input box
-    input: String,
-    /// History of recorded messages
-    messages: Vec<String>,
-}
-
-impl Default for App {
-    fn default() -> App {
-        App {
-            input: String::new(),
-            messages: Vec::new(),
-        }
-    }
-}
 fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
     // whole app layout wrapper
    let chunks = Layout::default()
@@ -54,38 +42,41 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
             ].as_ref()
         )
         .split(chunks[0]);
+   //TODO: figure this out by parsing other lib commands
    let mut tmp_list: Vec<&str> = vec![];
-   tmp_list.push("one");
-   tmp_list.push("two");
-   tmp_list.push("three");
-   tmp_list.push("four");
+   tmp_list.push("Generate");
+   tmp_list.push("Run");
+   tmp_list.push("Build");
+   tmp_list.push("Serve");
+   tmp_list.push("Test");
        let items: Vec<ListItem> = tmp_list.iter().map(|i| {
            ListItem::new(Span::from(i.to_string()))
        }).collect();
    // side nav menu block
     let nav = List::new(items)
-        .block(Block::default().borders(Borders::ALL).title("List"));
+        .block(Block::default().borders(Borders::ALL).title("List"))
+        .highlight_style(
+                Style::default()
+                    .bg(Color::LightGreen)
+                    .add_modifier(Modifier::BOLD),
+            )
+            .highlight_symbol(">> ");
     f.render_widget(nav, side_nav[0]);
 
-    // Main wrapping block
-    let block = Block::default()
-         .title("Builder")
-         .borders(Borders::ALL);
-    f.render_widget(block, chunks[0]);
-    // bottom input block
-    let input = Paragraph::new(app.input.as_ref())
-        .block(Block::default().borders(Borders::ALL).title("Command"));
-    f.render_widget(input, chunks[1]);
-    f.set_cursor(
-                // Put cursor past the end of the input text
-                chunks[1].x + app.input.width() as u16 + 1,
-                // Move one line down, from the border to the input line
-                chunks[1].y + 1,
-            )
+    let body = Paragraph::new("This will be where the builder will be".to_string())
+        .block(Block::default().borders(Borders::ALL).title("Generate"));
+    f.render_widget(body, side_nav[1]);
+    //builder block
+    div(f, app, chunks[0], "Builder");
+    //bottom search input block
+    search(f, app, chunks);
 }
+
+
 
 fn main() -> Result<()> {
     // setup terminal
+    styled!("input", ("className", "error"), vec![0,1,2,3]);
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
@@ -115,7 +106,7 @@ fn main() -> Result<()> {
                     }
                     _ => {
                         // not sure i'll have more yet
-                        todo!();
+                        break;
                     }
                 }
                 // just for making sure i'm not insane when getting inputs
