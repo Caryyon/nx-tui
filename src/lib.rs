@@ -19,5 +19,5 @@ impl Default for App {
 macro_rules! styled {
     ($element:expr, $props:expr, $children:expr) => {
         println!("{:?} {:?} {:?}", $element, $props, $children);
-    }
+    };
 }
